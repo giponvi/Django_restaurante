@@ -10,14 +10,15 @@ class CategoriaSerializer(serializers.ModelSerializer):
 class ProdutoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Produto
-        fields = ['nome', 'descricao', 'preco', 'disponivel', 'categoria']
+        fields = ['id', 'nome', 'descricao', 'preco', 'disponivel', 'categoria']
 
 class PedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pedido
-        fields = ['nome_cliente','data_criacao', 'status']
+        fields = ['id', 'nome_cliente','data_criacao', 'status']
         
 class ItemPedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemPedido
-        fields = ['pedido', 'produto', 'quantidade', 'preco_congelado']
+        fields = ['id', 'pedido', 'produto', 'quantidade', 'preco_congelado']
+        read_only_fields = ['preco_congelado']

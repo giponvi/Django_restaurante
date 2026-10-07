@@ -19,9 +19,9 @@ class Produto(models.Model):
 
 class Pedido(models.Model):
     class statusChoices(models.TextChoices):
-        AGUARDANDO = 'A'
-        PREPARANDO = 'P'
-        ENTREGUE = 'E'
+        AGUARDANDO = 'A', 'Aguardando'
+        PREPARANDO = 'P', 'Em preparo'
+        ENTREGUE = 'E', 'Finalizado'
     nome_cliente = models.CharField(max_length = 150)
     data_criacao = models.DateTimeField(auto_now_add = True)
     status = models.CharField(max_length = 1, choices = statusChoices, default = statusChoices.AGUARDANDO)
