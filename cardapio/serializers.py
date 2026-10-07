@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.renderers import JSONRenderer
 from .models import Categoria, Produto, Pedido, ItemPedido
 
 
@@ -11,14 +10,14 @@ class CategoriaSerializer(serializers.ModelSerializer):
 class ProdutoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Produto
-        fields = '__all__'
+        fields = ['nome', 'descricao', 'preco', 'disponivel', 'categoria']
 
 class PedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pedido
-        fields = '__all__'
+        fields = ['nome_cliente','data_criacao', 'status']
         
 class ItemPedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemPedido
-        fields = '__all__'
+        fields = ['pedido', 'produto', 'quantidade', 'preco_congelado']

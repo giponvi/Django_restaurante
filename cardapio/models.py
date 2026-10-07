@@ -18,14 +18,13 @@ class Produto(models.Model):
         return self.nome
 
 class Pedido(models.Model):
-    opcoes = [
-        ('A', 'Aguardando'),
-        ('P', 'Preparando'),
-        ('E', 'Entregue')
-    ]
+    class statusChoices(models.TextChoices):
+        AGUARDANDO = 'A'
+        PREPARANDO = 'P'
+        ENTREGUE = 'E'
     nome_cliente = models.CharField(max_length = 150)
     data_criacao = models.DateTimeField(auto_now_add = True)
-    status = models.CharField(max_length = 1, choices = opcoes, default = 'A')
+    status = models.CharField(max_length = 1, choices = statusChoices, default = statusChoices.AGUARDANDO)
 
     def __str__(self):
         return self.nome_cliente
@@ -37,4 +36,4 @@ class ItemPedido(models.Model):
     preco_congelado = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self):
-        return self.nome_item
+        return f"{self.quantidade}x {self.produto.nome}"
