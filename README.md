@@ -60,7 +60,7 @@ Django_restaurante/
 
 ## 📖 Decisões de Arquitetura
 
-As decisões técnicas do projeto — e o porquê de cada uma — estão documentadas em [`DECISIONS.md`](./DECISIONS.md).
+As decisões técnicas do projeto e o porquê de cada uma estão documentadas em [`DECISIONS.md`](./DECISIONS.md).
 
 ## 👤 Autor
 
