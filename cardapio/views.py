@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Categoria, Produto, Pedido, ItemPedido
 from .serializers import CategoriaSerializer, ProdutoSerializer, PedidoSerializer, ItemPedidoSerializer
+from rest_framework.permissions import AllowAny, IsAdmin
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
