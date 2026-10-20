@@ -41,6 +41,9 @@ Django_restaurante/
 ├── DECISIONS.md         # ADRs e pendências
 └── README.md
 ```
+## 🛠️Configuração
+- copiar .env.example para .env, preencher;
+- instalar requirements.txt.
 
 ## 📋 Modelagem e regras atuais
 
