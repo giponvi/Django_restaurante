@@ -88,12 +88,36 @@ Formato: `ADR-XXX` (Architecture/Implementation Decision Record), em ordem crono
 **Alternativas consideradas:** manter `CASCADE`; `SET_NULL` com dados históricos independentes; snapshots do nome/preço do produto; exclusão lógica de produto.
 **Consequências e pontos abertos:** definir regras para editar pedidos antigos, alterar produto e preço congelado, cancelar pedidos e excluir categorias. `PROTECT` impede apagar produto referenciado, mas não substitui validação de disponibilidade. Considerar snapshot histórico do nome do produto e regras de auditoria para documentos comerciais. Não houve alterações nos models para essa decisão até a revisão de 10/10/2026.
 
+
+## Camada de Código — Fase pré-Sprint 3 (higiene e configuração)
+
+### ADR-012 — Segredos e configuração via variáveis de ambiente (`django-environ`)
+**Estado:** IMPLEMENTADO para `SECRET_KEY` e `DEBUG`. `ALLOWED_HOSTS`, banco e demais configurações continuam fixos no código.
+**Contexto:** a `SECRET_KEY` estava escrita em `setup/settings.py` e versionada no GitHub. A mesma chave assina sessões e, no padrão do Simple JWT, os tokens de autenticação.
+**Decisão:** ler `SECRET_KEY` e `DEBUG` de um arquivo `.env` com `django-environ`. `SECRET_KEY` não tem valor padrão (se faltar, o Django falha ao iniciar com `ImproperlyConfigured`). `DEBUG` usa casting `bool` com padrão `False`. O `.env` fica fora do Git; o `.env.example`, com os nomes das variáveis e valores fictícios, é versionado para documentar o que precisa ser configurado. Uma chave nova foi gerada e a anterior foi aposentada.
+**Alternativas consideradas:** `os.environ` puro (também falha alto, mas não lê o `.env` sozinho nem faz casting); `os.getenv` (devolve `None` ou exige um valor padrão, o que mascara a configuração ausente ou convida a deixar uma chave reserva no código); `python-dotenv` (carrega o `.env`, mas sem casting e sem tratamento de URLs de banco e cache).
+**Consequências:** o projeto não sobe sem o `.env`, e o erro aponta a variável ausente. Sessões e tokens emitidos com a chave antiga deixaram de valer (novo login necessário). A chave antiga continua no histórico do Git, mas está aposentada e era a chave `django-insecure` gerada pelo `startproject`. O `django-environ` já está pronto para ler `DATABASE_URL` (PostgreSQL em produção) e `CACHE_URL` (Redis, Sprint 3). Com `DEBUG=False` e `ALLOWED_HOSTS` vazio o Django recusa as requisições (erro 400), por isso o `.env` local define `DEBUG=True`. O `.env.example` deve ser atualizado sempre que surgir uma variável nova.
+**Pendências:** ler `ALLOWED_HOSTS` do ambiente; definir como a configuração será fornecida no deploy (Render/Railway).
+
+### ADR-013 — Artefatos locais e gerados fora do versionamento
+**Estado:** IMPLEMENTADO.
+**Contexto:** o repositório continha o `db.sqlite3` (usuários de teste com hashes de senha e dados de teste, alterado a cada execução) e as pastas `__pycache__` com 15 arquivos `.pyc`, que mudavam a cada execução e poluíam os commits.
+**Decisão:** `db.sqlite3`, `.env`, `__pycache__/` e `*.pyc` ficam no `.gitignore`. Os arquivos que já estavam versionados foram retirados do índice do Git (`git rm --cached`) e continuam no disco. As migrations continuam versionadas.
+**Alternativas consideradas:** versionar o banco de desenvolvimento (rejeitado: contém dados de usuários, gera conflitos e incha o histórico).
+**Consequências:** quem clonar o projeto precisa criar o banco (`migrate`) e um superusuário, e passa a ser necessário um script ou fixtures com dados de exemplo, alinhado à população sintética planejada para testes e BI. Versões antigas desses arquivos permanecem no histórico (aceitável para um banco de estudo; as senhas de teste não devem ser reutilizadas). O `.gitignore` precisa estar em UTF-8: em UTF-16 o Git ignora as regras sem avisar, o que apareceu aqui como `.env` listado entre os arquivos não rastreados.
+
+### ADR-014 — Restabelecer a configuração `MAILERS` no início da Sprint 3
+**Estado:** DECIDIDO; NÃO IMPLEMENTADO.
+**Contexto:** o `settings.py` gerado pelo `startproject` do Django 6.1 inclui `MAILERS` (backend de e-mail que imprime no console em desenvolvimento), que substitui o `EMAIL_BACKEND` clássico. O bloco foi removido por engano durante uma limpeza, sob a suposição de que não era uma configuração válida; a documentação oficial do Django 6.1 (guia de migração para mailers) confirma que é.
+**Decisão:** restaurar o bloco padrão no início da Sprint 3.
+**Consequências:** o projeto ainda não envia e-mail, então não há impacto funcional hoje; a restauração evita depender do comportamento antigo. Se um dia houver um provedor real de e-mail, as credenciais devem vir de variáveis de ambiente (ADR-012).
+
 ---
 
 ## Pendências e melhorias propostas — sem implementação nesta revisão
 
 ### Prioridade alta / antes de qualquer ambiente público
-1. **Segredos e configuração:** `SECRET_KEY` está explícita no repositório; rotacionar e usar variáveis de ambiente; manter `DEBUG=False` fora de desenvolvimento; revisar `ALLOWED_HOSTS` e políticas de implantação. Evitar versionar tokens e bancos de teste com dados privados.
+1. **Segredos e configuração (parcialmente resolvido, ver ADR-012):** `SECRET_KEY` e `DEBUG` agora vêm do ambiente. Pendentes: ler `ALLOWED_HOSTS` (e, em produção, o banco) de variáveis de ambiente; definir como a configuração será fornecida no deploy; manter `DEBUG=False` fora do desenvolvimento; evitar versionar tokens e bancos de teste com dados privados.
 2. **Histórico do pedido:** aplicar e testar ADR-011 com migrações seguras, considerando as exclusões em cascata que partem de Categoria e Produto.
 3. **Disponibilidade:** validação server-side nos serializers/serviços para bloquear `POST` de produto indisponível e `PATCH` que troca o produto para um indisponível. Avaliar a semântica de alteração de itens históricos.
 4. **Preço congelado:** decidir se a troca do `produto` de um ItemPedido existente será proibida ou terá tratamento especial de preço. Testar PATCH, PUT e criação.

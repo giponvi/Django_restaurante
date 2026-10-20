@@ -31,7 +31,7 @@ class Pedido(models.Model):
 
 class ItemPedido(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete = models.CASCADE, related_name = 'itens_pedido')
-    produto = models.ForeignKey(Produto, on_delete = models.CASCADE, related_name = 'produtos_pedido')
+    produto = models.ForeignKey(Produto, on_delete = models.PROTECT, related_name = 'produtos_pedido')
     quantidade = models.IntegerField()
     preco_congelado = models.DecimalField(max_digits=8, decimal_places=2)
 
