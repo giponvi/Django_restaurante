@@ -3,8 +3,7 @@ from rest_framework import viewsets
 from .models import Categoria, Produto, Pedido, ItemPedido
 from .serializers import CategoriaSerializer, ProdutoSerializer, PedidoSerializer, ItemPedidoSerializer
 from .permissions import IsAdminOrReadOnly
-
-
+from rest_framework.exceptions import ValidationError
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
@@ -27,3 +26,8 @@ class ItemPedidoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         produto_escolhido = serializer.validated_data.get('produto')
         serializer.save(preco_congelado=produto_escolhido.preco)
+
+    def perform_destroy(self, instance):
+        if instance.pedido.status == Pedido.statusChoices.ENTREGUE:
+            raise ValidationError("Este pedido já foi entregue e seus itens não podem ser apagados.")
+        instance.delete()
